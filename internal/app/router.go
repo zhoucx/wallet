@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"fmt"
+	"strings"
 	"wallet/internal/model"
 	"wallet/internal/pkg"
 )
@@ -25,7 +26,7 @@ type CreateWalletResp struct {
 	ErrCode *pkg.ErrorCode `json:",omitempty"`
 }
 
-func (r *CreateWalletResp) Marshal() string {
+func (r *CreateWalletResp) MarshalToString() string {
 	buf, _ := json.Marshal(r)
 	return string(buf)
 }
@@ -38,7 +39,7 @@ func CreateWallet(w http.ResponseWriter, r *http.Request) {
 	pkg.Debug("CreateWallet entry, method: %s, url: %v", r.Method, r.URL.Path)
 	if r.Method != http.MethodPost {
 		resp.ErrCode = pkg.NewErrCode(http.StatusBadRequest, "/wallets only support POST method")
-		http.Error(w, resp.Marshal(), http.StatusMethodNotAllowed)
+		http.Error(w, resp.MarshalToString(), http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
@@ -54,14 +55,24 @@ func CreateWallet(w http.ResponseWriter, r *http.Request) {
 // GetWallet GET /wallets/:id get wallet by id, Returns wallet ID and current balance
 func GetWallet(w http.ResponseWriter, r *http.Request) {
 	pkg.Debug("GetWallet entry, method: %s, url: %s", r.Method, r.URL.Path)
+	resp := CreateWalletResp{}
 	if r.Method != http.MethodGet {
-		http.Error(w, "Only GET method is allowed", http.StatusMethodNotAllowed)
+		resp.ErrCode = pkg.NewErrCode(http.StatusBadRequest, "/wallets/:id only support GET method")
+		http.Error(w, resp.MarshalToString(), http.StatusMethodNotAllowed)
 		return
 	}
-	defer r.Body.Close()
-
-	//pkg.Info("CreateWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.Encode)
+	items := strings.Split(r.URL.Path, "/")
+	if len(items) != 3 && len(items[2]) == 0 {
+		resp.ErrCode = pkg.NewErrCode(http.StatusBadRequest, "url.Path invalid")
+		http.Error(w, resp.MarshalToString(), http.StatusMethodNotAllowed)
+		return
+	}
+	walletId := items[2]
+	resp.Wallet, resp.ErrCode = model.GetWallet(walletId)
+	json.NewEncoder(w).Encode(resp)
+	pkg.Info("GetWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.ErrCode)
 }
+
 
 // TransferWallet POST /wallets/transfer Transfers an amount from one wallet to another
 func TransferWallet(w http.ResponseWriter, r *http.Request) {
