@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"fmt"
 	"strings"
+	"io/ioutil"
 	"wallet/internal/model"
 	"wallet/internal/pkg"
 )
@@ -76,13 +77,37 @@ func GetWallet(w http.ResponseWriter, r *http.Request) {
 
 // TransferWallet POST /wallets/transfer Transfers an amount from one wallet to another
 func TransferWallet(w http.ResponseWriter, r *http.Request) {
-	pkg.Debug("GetWallet entry, method: %s, url: %s", r.Method, r.URL.Path)
+	pkg.Debug("TransferWallet entry, method: %s, url: %s", r.Method, r.URL.Path)
 
+	resp := CreateWalletResp{}
 	if r.Method != http.MethodPost {
-		http.Error(w, "Only GET method is allowed", http.StatusMethodNotAllowed)
+		resp.ErrCode = pkg.NewErrCode(http.StatusBadRequest, "/walletstransfer only support POST method")
+		http.Error(w, resp.MarshalToString(), http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
-
-	// pkg.Info("CreateWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.Encode)
+	body, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+		resp.ErrCode = pkg.NewErrCode(pkg.LibErrCode, "read http.Request body failed")
+		http.Error(w, resp.MarshalToString(), http.StatusBadRequest)
+		return
+    }
+	fmt.Printf("TransferWallet request body: %s\n", string(body))
+    transferReq := model.TransferReq{}
+	err = json.Unmarshal(body, &transferReq)
+	if err != nil {
+		resp.ErrCode = pkg.NewErrCode(pkg.LibErrCode, "unmarshal http.Request body failed")
+		http.Error(w, resp.MarshalToString(), http.StatusBadRequest)
+		return
+	}
+	if transferReq.SrcWalletId == "" || transferReq.DestWalletId == "" || transferReq.Amount <= 0 || transferReq.SrcWalletId == transferReq.DestWalletId {
+		resp.ErrCode = pkg.NewErrCode(pkg.LibErrCode, fmt.Sprintf("transferReq invalid: %+v", transferReq))
+		http.Error(w, resp.MarshalToString(), http.StatusBadRequest)
+		return
+	}
+	resp.Wallet, resp.ErrCode = model.TransferWallet(transferReq)
+    w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+	pkg.Info("TransferWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.ErrCode)
 }

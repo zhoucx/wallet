@@ -50,8 +50,16 @@ type TransferReq struct {
 }
 
 // TransferWallet Transfers an amount from one wallet to another
-func TransferWallet(req TransferReq) *pkg.ErrorCode {
-	return gWalletPool.Transfer(req)
+func TransferWallet(req TransferReq) (*Wallet, *pkg.ErrorCode) {
+	wallet, errCode := gWalletPool.Transfer(req)
+	if errCode != nil {
+		return nil, errCode
+	}
+	return &wallet, nil
+}
+
+func AddWalletBalance(id string, amount int64) *pkg.ErrorCode  {
+	return gWalletPool.addBalance(id, amount)
 }
 
 func (wp *WalletPool) CreateWallet() (wallet Wallet, errCode *pkg.ErrorCode) {
@@ -79,25 +87,40 @@ func (wp *WalletPool) GetWallet(id string) (wallet Wallet, errCode *pkg.ErrorCod
 	return wallet, nil
 }
 
-func (wp *WalletPool) Transfer(req TransferReq) *pkg.ErrorCode {
+func (wp *WalletPool) Transfer(req TransferReq) (srcWallet Wallet, errCode *pkg.ErrorCode) {
 	wp.mtx.Lock()
 	defer wp.mtx.Unlock()
 
 	srcWallet, ok := wp.pool[req.SrcWalletId]
 	if !ok {
-		return pkg.NewWallentNotExistErr()
+		return srcWallet, pkg.NewWallentNotExistErr()
 	}
 	destWallet, ok := wp.pool[req.DestWalletId]
 	if !ok {
-		return pkg.NewDestWallentNotExistErr()
+		return srcWallet, pkg.NewDestWallentNotExistErr()
 	}
 	if srcWallet.Balance < req.Amount {
-		return pkg.NewAmountNotEnoughErr()
+		return srcWallet, pkg.NewAmountNotEnoughErr()
 	}
 	srcWallet.Balance -= req.Amount
 	wp.pool[req.SrcWalletId] = srcWallet
 	destWallet.Balance += req.Amount
 	wp.pool[req.DestWalletId] = destWallet
 	addTransferLog(req, srcWallet, destWallet)
+	return srcWallet, nil
+}
+
+// 给账号加金额，用于测试或后台
+func (wp *WalletPool) addBalance(id string, amount int64) *pkg.ErrorCode {
+	wp.mtx.Lock()
+	defer wp.mtx.Unlock()
+
+	wallet, ok := wp.pool[id]
+	if !ok {
+		return pkg.NewWallentNotExistErr()
+	}
+	wallet.Balance += amount
+	wp.pool[id] = wallet
+	addBalanceLog(id, amount, wallet)
 	return nil
 }
