@@ -2,10 +2,10 @@ package app
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
-	"strings"
 	"io/ioutil"
+	"net/http"
+	"strings"
 	"wallet/internal/model"
 	"wallet/internal/pkg"
 )
@@ -23,7 +23,7 @@ func defaultRouter(w http.ResponseWriter, r *http.Request) {
 
 // CreateWalletResp create wallet response data
 type CreateWalletResp struct {
-	Wallet  *model.Wallet `json:",omitempty"`
+	Wallet  *model.Wallet  `json:",omitempty"`
 	ErrCode *pkg.ErrorCode `json:",omitempty"`
 }
 
@@ -31,7 +31,6 @@ func (r *CreateWalletResp) MarshalToString() string {
 	buf, _ := json.Marshal(r)
 	return string(buf)
 }
-
 
 // CreateWallet POST /wallets create a new wallet, Initial balance is zero
 func CreateWallet(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +46,7 @@ func CreateWallet(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	
+
 	resp.Wallet, resp.ErrCode = model.CreateWallet()
 	json.NewEncoder(w).Encode(resp)
 	pkg.Info("CreateWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.ErrCode)
@@ -74,7 +73,6 @@ func GetWallet(w http.ResponseWriter, r *http.Request) {
 	pkg.Info("GetWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.ErrCode)
 }
 
-
 // TransferWallet POST /wallets/transfer Transfers an amount from one wallet to another
 func TransferWallet(w http.ResponseWriter, r *http.Request) {
 	pkg.Debug("TransferWallet entry, method: %s, url: %s", r.Method, r.URL.Path)
@@ -87,13 +85,13 @@ func TransferWallet(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
+	if err != nil {
 		resp.ErrCode = pkg.NewErrCode(pkg.LibErrCode, "read http.Request body failed")
 		http.Error(w, resp.MarshalToString(), http.StatusBadRequest)
 		return
-    }
+	}
 	fmt.Printf("TransferWallet request body: %s\n", string(body))
-    transferReq := model.TransferReq{}
+	transferReq := model.TransferReq{}
 	err = json.Unmarshal(body, &transferReq)
 	if err != nil {
 		resp.ErrCode = pkg.NewErrCode(pkg.LibErrCode, "unmarshal http.Request body failed")
@@ -106,7 +104,7 @@ func TransferWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp.Wallet, resp.ErrCode = model.TransferWallet(transferReq)
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 	pkg.Info("TransferWallet resp wallet: %+v, errCode: %+v", resp.Wallet, resp.ErrCode)

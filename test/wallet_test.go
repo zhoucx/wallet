@@ -1,40 +1,40 @@
 package test
 
 import (
-	"testing"
-	"net/http"
-	"io/ioutil"
-	"wallet/internal/app"
-	"encoding/json"
-	"time"
-	"fmt"
 	"bytes"
-	"wallet/internal/pkg"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+	"time"
+	"wallet/internal/app"
 	"wallet/internal/model"
+	"wallet/internal/pkg"
 )
 
 func TestCreateWallet(t *testing.T) {
 	go startServer(9091)
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 
 	resp, err := createWallet("http://localhost:9091/wallets")
-	if err != nil || resp == nil{
+	if err != nil || resp == nil {
 		t.Errorf("createWallet failed: %v", err)
-		return 
+		return
 	}
 	if resp.ErrCode != nil {
 		t.Errorf("createResp have errCode: %+v", resp.ErrCode)
-		return 
+		return
 	}
 	if resp.Wallet == nil || resp.Wallet.Id == "" || resp.Wallet.Balance != 0 {
 		t.Errorf("createResp wallet invalid")
-		return 
+		return
 	}
 }
 
 func TestGetWallet(t *testing.T) {
 	go startServer(9092)
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	// 获取不存在的钱包
 	resp, err := getWallet("http://localhost:9092/wallets/001")
 	if err != nil {
@@ -43,7 +43,7 @@ func TestGetWallet(t *testing.T) {
 	}
 	if resp.ErrCode == nil || resp.ErrCode.Code != pkg.WallentNotExistCode {
 		t.Errorf("get not exist wallet return success")
-		return 
+		return
 	}
 	// 创建一个钱包再获取
 	createResp, err := createWallet("http://localhost:9092/wallets")
@@ -53,16 +53,16 @@ func TestGetWallet(t *testing.T) {
 	}
 	if createResp.ErrCode != nil || createResp.Wallet.Id == "" {
 		t.Errorf("create wallet resp invalid： %s", createResp.MarshalToString())
-		return 
+		return
 	}
-	getResp, err := getWallet("http://localhost:9092/wallets/"+createResp.Wallet.Id)
+	getResp, err := getWallet("http://localhost:9092/wallets/" + createResp.Wallet.Id)
 	if err != nil {
 		t.Errorf("get wallet failed: %v", err)
 		return
 	}
 	if getResp.Wallet == nil || getResp.ErrCode != nil {
 		t.Errorf("get wallet resp invalid: %s", getResp.MarshalToString())
-		return 
+		return
 	}
 	if getResp.Wallet.Id != createResp.Wallet.Id && getResp.Wallet.Balance != 0 {
 		t.Errorf("get wallet resp id or balance invalid: %s", getResp.MarshalToString())
@@ -73,7 +73,7 @@ func TestGetWallet(t *testing.T) {
 
 func TestTransferWallet(t *testing.T) {
 	go startServer(9093)
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 
 	// 创建账号，加钱
 	createResp, err := createWallet("http://localhost:9093/wallets")
@@ -97,11 +97,11 @@ func TestTransferWallet(t *testing.T) {
 
 	// 交易成功
 	transferReq := model.TransferReq{
-		SrcWalletId: srcWallet.Id,
+		SrcWalletId:  srcWallet.Id,
 		DestWalletId: destWallet.Id,
-		Amount: 400,
+		Amount:       400,
 	}
-	transferResp, err := transferWallet("http://localhost:9093/wallets/transfer", transferReq )
+	transferResp, err := transferWallet("http://localhost:9093/wallets/transfer", transferReq)
 	if err != nil {
 		t.Errorf("transferWallet failed: %v", err)
 		return
@@ -111,13 +111,13 @@ func TestTransferWallet(t *testing.T) {
 		return
 	}
 	if transferResp.Wallet.Id != transferReq.SrcWalletId || transferResp.Wallet.Balance != srcWallet.Balance-transferReq.Amount {
-		t.Errorf("transfer wallet result invalid: %+v",  transferResp.Wallet)
-		return 
+		t.Errorf("transfer wallet result invalid: %+v", transferResp.Wallet)
+		return
 	}
 
 	// 金额不够，交易失败
 	transferReq.Amount = 800
-	transferResp, err = transferWallet("http://localhost:9093/wallets/transfer", transferReq )
+	transferResp, err = transferWallet("http://localhost:9093/wallets/transfer", transferReq)
 	if err != nil {
 		t.Errorf("transferWallet failed: %v", err)
 		return
@@ -132,10 +132,6 @@ func TestTransferWallet(t *testing.T) {
 	}
 }
 
-
-
-
-
 func startServer(port int) {
 	app.StartServer(port)
 }
@@ -147,12 +143,12 @@ func createWallet(url string) (*app.CreateWalletResp, error) {
 	}
 	defer httpResp.Body.Close()
 
-    body, err := ioutil.ReadAll(httpResp.Body)
-    if err != nil {
+	body, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
 		return nil, fmt.Errorf("read httpResp.body failed: %v", err)
-    }
+	}
 	fmt.Printf("createWallet resp body: %s\n", string(body))
-    createResp := &app.CreateWalletResp{}
+	createResp := &app.CreateWalletResp{}
 	err = json.Unmarshal(body, createResp)
 	if err != nil {
 		return nil, fmt.Errorf("json.Unmarshal createResp failed: %v", err)
@@ -167,12 +163,12 @@ func getWallet(url string) (*app.CreateWalletResp, error) {
 	}
 	defer httpResp.Body.Close()
 
-    body, err := ioutil.ReadAll(httpResp.Body)
-    if err != nil {
+	body, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
 		return nil, fmt.Errorf("read httpResp.body failed: %v", err)
-    }
+	}
 	fmt.Printf("get wallet resp.body: %s\n", string(body))
-    getResp := &app.CreateWalletResp{}
+	getResp := &app.CreateWalletResp{}
 	err = json.Unmarshal(body, getResp)
 	if err != nil {
 		return nil, fmt.Errorf("json.Unmarshal getResp failed: %v", err)
@@ -192,12 +188,12 @@ func transferWallet(url string, req model.TransferReq) (*app.CreateWalletResp, e
 	}
 	defer httpResp.Body.Close()
 
-    body, err := ioutil.ReadAll(httpResp.Body)
-    if err != nil {
+	body, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
 		return nil, fmt.Errorf("read httpResp.body failed: %v", err)
-    }
+	}
 	fmt.Printf("transferWallet resp body: %s\n", string(body))
-    createResp := &app.CreateWalletResp{}
+	createResp := &app.CreateWalletResp{}
 	err = json.Unmarshal(body, createResp)
 	if err != nil {
 		return nil, fmt.Errorf("json.Unmarshal transferWallet failed: %v", err)

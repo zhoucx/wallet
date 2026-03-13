@@ -58,7 +58,7 @@ func TransferWallet(req TransferReq) (*Wallet, *pkg.ErrorCode) {
 	return &wallet, nil
 }
 
-func AddWalletBalance(id string, amount int64) *pkg.ErrorCode  {
+func AddWalletBalance(id string, amount int64) *pkg.ErrorCode {
 	return gWalletPool.addBalance(id, amount)
 }
 

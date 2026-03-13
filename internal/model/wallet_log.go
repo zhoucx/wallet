@@ -41,11 +41,11 @@ func addTransferLog(req TransferReq, srcWallet Wallet, destWallet Wallet) {
 func addBalanceLog(id string, amount int64, wallet Wallet) {
 	timeStr := time.Now().Format("2006-01-02 15:04:05")
 	srcLog := TransferLog{
-		WalletId:         id,
-		Amount:           amount,
-		Message:          "add balance by admin",
-		Balance:          wallet.Balance,
-		TimeStr:          timeStr,
+		WalletId: id,
+		Amount:   amount,
+		Message:  "add balance by admin",
+		Balance:  wallet.Balance,
+		TimeStr:  timeStr,
 	}
 	fmt.Printf("%+v\n", srcLog)
 }
