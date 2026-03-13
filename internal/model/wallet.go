@@ -25,13 +25,21 @@ type WalletPool struct {
 }
 
 // CreateWallet create wallet, return walletId and balance is zero
-func CreateWallet() (wallet Wallet, errCode *pkg.ErrorCode) {
-	return gWalletPool.CreateWallet()
+func CreateWallet() (*Wallet, *pkg.ErrorCode) {
+	wallet, errCode := gWalletPool.CreateWallet()
+	if errCode != nil {
+		return nil, errCode
+	}
+	return &wallet, nil
 }
 
 // GetWallet get wallet information
-func GetWallet(id string) (wallet Wallet, errCode *pkg.ErrorCode) {
-	return gWalletPool.GetWallet(id)
+func GetWallet(id string) (*Wallet, *pkg.ErrorCode) {
+	wallet, errCode := gWalletPool.GetWallet(id)
+	if errCode != nil {
+		return nil, errCode
+	}
+	return &wallet, nil
 }
 
 // TransferReq Transfers wallet amount request information

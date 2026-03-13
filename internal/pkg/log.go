@@ -21,25 +21,24 @@ func InitLogLevel(level int) {
 
 
 func Error(format string, argv ...interface{}) {
-	fmt.Printf("%s Error msg: " + format+"\n", GetCurTimeStr(), argv)
+	fmt.Printf(GetCurTimeStr() +" Error msg: " + format+"\n", argv...)
 }
-
 
 func Warn(format string, argv ...interface{}) {
 	if gLogLevel <= LogLevelWarn {
-		fmt.Printf("%s Warn msg: " + format+"\n", GetCurTimeStr(), argv)
+		fmt.Printf(GetCurTimeStr() +"%s Warn msg: " + format+"\n",  argv...)
 	}
 }
 
 func Info(format string, argv ...interface{}) {
 	if gLogLevel <= LogLevelInfo {
-	    fmt.Printf("%s Info msg: " + format+"\n", GetCurTimeStr(), argv)
+	    fmt.Printf(GetCurTimeStr() +" Info msg: " + format+"\n", argv...)
 	}
 }
 
 func Debug(format string, argv ...interface{}) {
 	if gLogLevel <= LogLevelDebug {
-	    fmt.Printf("%s Debug msg: " + format+"\n", GetCurTimeStr(), argv)
+	    fmt.Printf(GetCurTimeStr() + " Debug msg: " + format+"\n", argv...)
 	}
 }
 

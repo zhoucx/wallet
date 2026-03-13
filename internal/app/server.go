@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-func StartServer() {
+func StartServer(port int) {
 	initRouter()
-	fmt.Println("Server is running on http://localhost:9091")
-	http.ListenAndServe(":9091", nil)
+	fmt.Printf("Server is running on http://localhost:%d", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
